@@ -2,6 +2,7 @@ name: Bug Report
 description: Report a bug or issue
 type: Bug
 labels: ["bug"]
+projects: ["metatrom-ag/6"]
 body:
   - type: markdown
     attributes:
