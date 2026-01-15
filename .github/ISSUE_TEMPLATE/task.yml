@@ -1,0 +1,62 @@
+name: Task
+description: A task to be done
+type: Task
+labels: ["task"]
+projects: ["metatrom-ag/6"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+      placeholder: Describe the task
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know when this is done?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: false
+
+  - type: dropdown
+    id: story-points
+    attributes:
+      label: Story Points
+      description: Relative complexity/effort
+      options:
+        - "1 - Trivial"
+        - "2 - Small"
+        - "3 - Medium"
+        - "5 - Large"
+        - "8 - Very Large"
+        - "13 - Epic (needs breakdown)"
+        - "Unknown"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this task?
+      options:
+        - "Low - Nice to have"
+        - "Medium - Should have"
+        - "High - Must have"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Add any other context here
+    validations:
+      required: false
