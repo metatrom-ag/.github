@@ -8,28 +8,16 @@ body:
     attributes:
       value: |
         ## Action (What)
-        Every action must be linked to an Issue.
-        **No action without issue.**
-
-  - type: textarea
-    id: issue
-    attributes:
-      label: Issue
-      description: |
-        Link to the Issue this action belongs to.
-        Type # to search and select an issue (autocomplete).
-      placeholder: "Type # to search for issue..."
-    validations:
-      required: true
+        Create this as a **sub-issue** from a parent Issue.
 
   - type: textarea
     id: description
     attributes:
       label: Action Description
-      description: What needs to be done?
+      description: What needs to be done? (optional for small tasks)
       placeholder: Describe the concrete action
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: acceptance-criteria
