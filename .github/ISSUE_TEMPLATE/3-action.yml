@@ -8,17 +8,17 @@ body:
     attributes:
       value: |
         ## Action (What)
-        Every action must be linked to an Idea or Bug.
-        **No action without purpose.**
+        Every action must be linked to an Issue.
+        **No action without issue.**
 
-  - type: input
-    id: parent-issue
+  - type: textarea
+    id: issue
     attributes:
-      label: Parent Issue
+      label: Issue
       description: |
-        Link to the Idea or Bug this action belongs to.
-        Use the issue number (e.g., #123) or full URL.
-      placeholder: "#123 or https://github.com/metatrom-ag/repo/issues/123"
+        Link to the Issue this action belongs to.
+        Type # to search and select an issue (autocomplete).
+      placeholder: "Type # to search for issue..."
     validations:
       required: true
 
