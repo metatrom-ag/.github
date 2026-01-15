@@ -1,0 +1,70 @@
+name: Link Action to Parent Issue
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  link-to-parent:
+    if: contains(github.event.issue.labels.*.name, 'action')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Extract parent issue number and link as sub-issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the issue body
+          BODY="${{ github.event.issue.body }}"
+
+          # Extract issue reference (looks for #123 pattern or full URL)
+          PARENT_NUM=$(echo "$BODY" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+
+          if [ -z "$PARENT_NUM" ]; then
+            # Try to extract from URL pattern
+            PARENT_NUM=$(echo "$BODY" | grep -oE 'issues/[0-9]+' | head -1 | grep -oE '[0-9]+')
+          fi
+
+          if [ -z "$PARENT_NUM" ]; then
+            echo "No parent issue found in body"
+            exit 0
+          fi
+
+          echo "Found parent issue: #$PARENT_NUM"
+
+          # Get the parent issue node ID
+          PARENT_ID=$(gh api graphql -f query='
+            query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                issue(number: $number) {
+                  id
+                }
+              }
+            }' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" -F number="$PARENT_NUM" --jq '.data.repository.issue.id')
+
+          if [ -z "$PARENT_ID" ]; then
+            echo "Could not find parent issue #$PARENT_NUM"
+            exit 0
+          fi
+
+          # Get the child (action) issue node ID
+          CHILD_ID=$(gh api graphql -f query='
+            query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                issue(number: $number) {
+                  id
+                }
+              }
+            }' -f owner="${{ github.repository_owner }}" -f repo="${{ github.event.repository.name }}" -F number="${{ github.event.issue.number }}" --jq '.data.repository.issue.id')
+
+          # Add as sub-issue
+          gh api graphql -f query='
+            mutation($parentId: ID!, $childId: ID!) {
+              addSubIssue(input: {issueId: $parentId, subIssueId: $childId}) {
+                issue {
+                  id
+                }
+              }
+            }' -f parentId="$PARENT_ID" -f childId="$CHILD_ID"
+
+          echo "Linked issue #${{ github.event.issue.number }} as sub-issue of #$PARENT_NUM"
