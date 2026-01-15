@@ -1,6 +1,6 @@
 name: Action
 description: A concrete action linked to an Idea or Bug
-type: Task
+type: Action
 labels: ["action"]
 projects: ["metatrom-ag/6"]
 body:
