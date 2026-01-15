@@ -1,4 +1,4 @@
-name: Auto-assign tasks
+name: Auto-assign actions
 on:
   issues:
     types: [opened]
@@ -6,7 +6,7 @@ on:
 jobs:
   assign:
     if: |
-      contains(github.event.issue.labels.*.name, 'task') &&
+      contains(github.event.issue.labels.*.name, 'action') &&
       github.event.issue.assignees[0] == null
     runs-on: ubuntu-latest
     permissions:

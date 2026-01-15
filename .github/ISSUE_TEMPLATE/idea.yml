@@ -7,41 +7,74 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to share your idea!
+        ## Ontocratic Issue Creation
+        Define the **Purpose** (Why) and **Intention** (How) clearly.
+        Actions (What) will be created as sub-issues once this is refined.
 
   - type: textarea
-    id: summary
+    id: purpose
     attributes:
-      label: Summary
-      description: A clear and concise description of the idea or feature
-      placeholder: What would you like to see?
+      label: Purpose (Why)
+      description: |
+        The reason this exists. How does it connect to our goals/strategy?
+        What problem does it solve? Why does this matter?
+      placeholder: |
+        This exists because...
+        It connects to our goal of...
     validations:
       required: true
 
   - type: textarea
-    id: problem
+    id: intention
     attributes:
-      label: Problem / Motivation
-      description: What problem does this solve? Why is this needed?
-      placeholder: Describe the problem or motivation behind this idea
+      label: Intention (How)
+      description: |
+        How do you envision approaching this?
+        What is the communication of this purpose to the team?
+      placeholder: |
+        We will approach this by...
+        The key aspects are...
     validations:
       required: true
 
-  - type: textarea
-    id: solution
+  - type: markdown
     attributes:
-      label: Proposed Solution
-      description: How do you envision this working?
-      placeholder: Describe your proposed solution
+      value: |
+        ---
+        ### Actions (What)
+        Once this idea is refined, create **sub-issues** for concrete actions.
+        Use the issue sidebar → "Create sub-issue" to link actions to this idea.
+
+  - type: textarea
+    id: initial-actions
+    attributes:
+      label: Initial Actions (optional)
+      description: |
+        Draft potential actions. These can become sub-issues later.
+      placeholder: |
+        - [ ] Action 1
+        - [ ] Action 2
+        - [ ] Action 3
     validations:
       required: false
 
-  - type: textarea
-    id: alternatives
+  - type: markdown
     attributes:
-      label: Alternatives Considered
-      description: Any alternative solutions or features you've considered?
-      placeholder: Describe alternatives you've considered
+      value: |
+        ---
+        ### Feedback (Reality)
+        Feedback will emerge through reviews, discussions, and retrospectives.
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria / Feedback Mechanism
+      description: |
+        How will we know this is successful?
+        What measurements or feedback loops should be in place?
+      placeholder: |
+        Success looks like...
+        We will measure by...
     validations:
       required: false
 
@@ -49,7 +82,7 @@ body:
     id: story-points
     attributes:
       label: Story Points
-      description: Relative complexity/effort (if known)
+      description: Relative complexity/effort
       options:
         - "1 - Trivial"
         - "2 - Small"
@@ -70,14 +103,5 @@ body:
         - "Low - Nice to have"
         - "Medium - Should have"
         - "High - Must have"
-    validations:
-      required: false
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional Context
-      description: Any other context, mockups, or screenshots
-      placeholder: Add any other context here
     validations:
       required: false

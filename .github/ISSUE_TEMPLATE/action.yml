@@ -1,0 +1,57 @@
+name: Action
+description: A concrete action linked to an Idea or Bug
+type: Task
+labels: ["action"]
+projects: ["metatrom-ag/6"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Action (What)
+        Every action must be linked to an Idea or Bug.
+        **No action without purpose.**
+
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Parent Issue
+      description: |
+        Link to the Idea or Bug this action belongs to.
+        Use the issue number (e.g., #123) or full URL.
+      placeholder: "#123 or https://github.com/metatrom-ag/repo/issues/123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Action Description
+      description: What needs to be done?
+      placeholder: Describe the concrete action
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know this action is complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+    validations:
+      required: false
+
+  - type: dropdown
+    id: story-points
+    attributes:
+      label: Story Points
+      description: Relative complexity/effort
+      options:
+        - "1 - Trivial"
+        - "2 - Small"
+        - "3 - Medium"
+        - "5 - Large"
+        - "8 - Very Large"
+    validations:
+      required: true

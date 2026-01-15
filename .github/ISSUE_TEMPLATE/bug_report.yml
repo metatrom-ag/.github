@@ -1,13 +1,15 @@
 name: Bug Report
 description: Report a bug or issue
 type: Bug
-labels: ["bug"]
+labels: ["bug", "triage"]
 projects: ["metatrom-ag/6"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting this bug! Please fill out the details below.
+        ## Bug Report
+        This bug will go through **triage** before being worked on.
+        Complex fixes may have sub-issues for individual actions.
 
   - type: textarea
     id: description
@@ -66,15 +68,15 @@ body:
     id: story-points
     attributes:
       label: Story Points
-      description: Relative complexity/effort to fix (if known)
+      description: Relative complexity/effort to fix (set during triage)
       options:
+        - "Unknown"
         - "1 - Trivial"
         - "2 - Small"
         - "3 - Medium"
         - "5 - Large"
         - "8 - Very Large"
         - "13 - Epic (needs breakdown)"
-        - "Unknown"
     validations:
       required: true
 
@@ -105,14 +107,5 @@ body:
       label: Logs / Screenshots
       description: Any relevant logs, error messages, or screenshots
       placeholder: Paste logs or drag & drop screenshots here
-    validations:
-      required: false
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional Context
-      description: Any other context about the problem
-      placeholder: Add any other context here
     validations:
       required: false
