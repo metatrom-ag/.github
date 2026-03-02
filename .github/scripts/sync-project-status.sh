@@ -1,103 +1,54 @@
 #!/bin/bash
 set -euo pipefail
 
-# Sync Project Status
-# ====================
-# When the Status field changes on a project item, this script finds all
-# other projects that contain the same issue and updates their Status to match.
+# Sync Project Status (Polling)
+# ==============================
+# Scans org projects for issues that exist in multiple Ontocratic projects
+# with mismatched Status values. When a mismatch is found, the most
+# recently updated value wins and gets synced to all other projects.
 #
-# Loop prevention: skips if target already has the same status.
-# Only syncs the "Status" field — other fields are left alone.
+# Template detection: Only syncs between projects whose Status field
+# contains the core Ontocratic statuses (Purpose, Intention, Action).
+# Projects without these statuses are ignored entirely.
 
-# --- Validate inputs ---
+ORG="${ORG:-metatrom-ag}"
 
-if [ -z "${CONTENT_NODE_ID:-}" ]; then
-  echo "No content node ID (draft issue?), skipping"
-  exit 0
-fi
+# Core Ontocratic statuses that identify a template-compatible project.
+# A project must have ALL of these to participate in sync.
+REQUIRED_STATUSES=("Purpose" "Intention" "Action")
 
-if [ -z "${FIELD_NODE_ID:-}" ]; then
-  echo "No field node ID, skipping"
-  exit 0
-fi
+echo "=== Sync Project Status ==="
+echo "Org: $ORG"
+echo ""
 
-# --- Check if the changed field is "Status" ---
+# --- Step 1: Get all org projects with their Status field options ---
 
-FIELD_NAME=$(gh api graphql -f query='
-  query($fieldId: ID!) {
-    node(id: $fieldId) {
-      ... on ProjectV2SingleSelectField {
-        name
-      }
-    }
-  }
-' -f fieldId="$FIELD_NODE_ID" --jq '.data.node.name // empty')
-
-if [ "$FIELD_NAME" != "Status" ]; then
-  echo "Field changed: '${FIELD_NAME:-unknown}' (not Status), skipping"
-  exit 0
-fi
-
-echo "Status field changed, syncing..."
-
-# --- Get current status from source project item ---
-
-STATUS_NAME=$(gh api graphql -f query='
-  query($itemId: ID!) {
-    node(id: $itemId) {
-      ... on ProjectV2Item {
-        fieldValueByName(name: "Status") {
-          ... on ProjectV2ItemFieldSingleSelectValue {
-            name
+PROJECTS_QUERY='
+query($org: String!, $cursor: String) {
+  organization(login: $org) {
+    projectsV2(first: 20, after: $cursor) {
+      nodes {
+        id
+        title
+        number
+        field(name: "Status") {
+          ... on ProjectV2SingleSelectField {
+            options { name }
           }
         }
-      }
-    }
-  }
-' -f itemId="$ITEM_NODE_ID" --jq '.data.node.fieldValueByName.name // empty')
-
-if [ -z "$STATUS_NAME" ]; then
-  echo "Could not read status value, skipping"
-  exit 0
-fi
-
-echo "New status: $STATUS_NAME"
-
-# --- Find all projects this issue/PR belongs to ---
-
-CONTENT_TYPE_QUERY='
-  query($contentId: ID!) {
-    node(id: $contentId) {
-      __typename
-      ... on Issue {
-        title
-        projectItems(first: 20) {
+        items(first: 100) {
           nodes {
             id
-            project {
-              id
-              title
+            updatedAt
+            content {
+              __typename
+              ... on Issue { id title number }
+              ... on PullRequest { id title number }
             }
             fieldValueByName(name: "Status") {
               ... on ProjectV2ItemFieldSingleSelectValue {
                 name
-              }
-            }
-          }
-        }
-      }
-      ... on PullRequest {
-        title
-        projectItems(first: 20) {
-          nodes {
-            id
-            project {
-              id
-              title
-            }
-            fieldValueByName(name: "Status") {
-              ... on ProjectV2ItemFieldSingleSelectValue {
-                name
+                updatedAt
               }
             }
           }
@@ -105,85 +56,175 @@ CONTENT_TYPE_QUERY='
       }
     }
   }
+}
 '
 
-CONTENT_DATA=$(gh api graphql -f query="$CONTENT_TYPE_QUERY" -f contentId="$CONTENT_NODE_ID")
+echo "Fetching all projects and items..."
+PROJECTS_DATA=$(gh api graphql -f query="$PROJECTS_QUERY" -f org="$ORG")
 
-CONTENT_TITLE=$(echo "$CONTENT_DATA" | jq -r '.data.node.title // "unknown"')
-echo "Issue: $CONTENT_TITLE"
+# --- Step 2: Filter to Ontocratic template-compatible projects ---
 
-# --- Sync to each other project ---
+# Build a jq filter for required statuses
+REQUIRED_JQ=$(printf '"%s",' "${REQUIRED_STATUSES[@]}")
+REQUIRED_JQ="[${REQUIRED_JQ%,}]"
 
-ITEMS=$(echo "$CONTENT_DATA" | jq -c '.data.node.projectItems.nodes[]')
-SYNCED=0
-SKIPPED=0
+ELIGIBLE_PROJECTS=$(echo "$PROJECTS_DATA" | jq --argjson req "$REQUIRED_JQ" '
+  [.data.organization.projectsV2.nodes[] |
+    . as $proj |
+    ($proj.field.options // [] | map(.name)) as $opts |
+    # Check all required statuses exist in this project
+    if ($req | all(. as $r | $opts | any(. == $r))) then
+      { id: $proj.id, title: $proj.title, number: $proj.number }
+    else empty end
+  ]
+')
 
-echo "$ITEMS" | while IFS= read -r item; do
-  item_id=$(echo "$item" | jq -r '.id')
-  project_id=$(echo "$item" | jq -r '.project.id')
-  project_title=$(echo "$item" | jq -r '.project.title')
-  current_status=$(echo "$item" | jq -r '.fieldValueByName.name // empty')
+ELIGIBLE_COUNT=$(echo "$ELIGIBLE_PROJECTS" | jq 'length')
+ELIGIBLE_IDS=$(echo "$ELIGIBLE_PROJECTS" | jq '[.[].id]')
+echo "Found $ELIGIBLE_COUNT Ontocratic template-compatible projects:"
+echo "$ELIGIBLE_PROJECTS" | jq -r '.[] | "  #\(.number) \(.title)"'
+echo ""
 
-  # Skip source project
-  if [ "$project_id" = "$PROJECT_NODE_ID" ]; then
-    echo "  [$project_title] source project, skipping"
+if [ "$ELIGIBLE_COUNT" -lt 2 ]; then
+  echo "Need at least 2 eligible projects to sync. Nothing to do."
+  exit 0
+fi
+
+# --- Step 3: Extract items only from eligible projects ---
+
+ITEMS_JSON=$(echo "$PROJECTS_DATA" | jq --argjson eligible "$ELIGIBLE_IDS" '
+  [.data.organization.projectsV2.nodes[] |
+    select(.id as $pid | $eligible | any(. == $pid)) |
+    .id as $pid | .title as $ptitle | .number as $pnum |
+    .items.nodes[] |
+    select(.content.__typename == "Issue" or .content.__typename == "PullRequest") |
+    select(.content.id != null) |
+    {
+      content_id: .content.id,
+      content_title: .content.title,
+      project_id: $pid,
+      project_title: $ptitle,
+      project_number: $pnum,
+      item_id: .id,
+      status: (.fieldValueByName.name // null),
+      updated_at: (.fieldValueByName.updatedAt // .updatedAt)
+    }
+  ]
+')
+
+# Group by content_id and find items in multiple eligible projects
+MULTI_PROJECT=$(echo "$ITEMS_JSON" | jq '
+  group_by(.content_id) |
+  map(select(length > 1)) |
+  map({
+    content_id: .[0].content_id,
+    content_title: .[0].content_title,
+    items: .
+  }) |
+  # Only keep groups where statuses differ
+  map(
+    .items as $items |
+    ($items | map(.status) | unique) as $statuses |
+    select(($statuses | length) > 1 or ($statuses | any(. == null)))
+  )
+')
+
+MISMATCH_COUNT=$(echo "$MULTI_PROJECT" | jq 'length')
+echo "Found $MISMATCH_COUNT issues with mismatched statuses across eligible projects"
+echo ""
+
+if [ "$MISMATCH_COUNT" = "0" ]; then
+  echo "All in sync. Nothing to do."
+  exit 0
+fi
+
+# --- Step 4: For each mismatch, sync to the most recently updated status ---
+
+# Use temp file for counters (avoids subshell pipe problem)
+COUNTER_FILE=$(mktemp)
+echo "0 0 0" > "$COUNTER_FILE"
+
+while IFS= read -r group; do
+  TITLE=$(echo "$group" | jq -r '.content_title')
+
+  # Find the most recently updated status (the "winner")
+  WINNER=$(echo "$group" | jq -r '
+    [.items[] | select(.status != null)] |
+    sort_by(.updated_at) |
+    last
+  ')
+
+  if [ "$WINNER" = "null" ] || [ -z "$WINNER" ]; then
+    echo "Issue: $TITLE"
+    echo "  No item has a status set, skipping"
+    echo ""
     continue
   fi
 
-  # Skip if already in sync (prevents loops)
-  if [ "$current_status" = "$STATUS_NAME" ]; then
-    echo "  [$project_title] already '$STATUS_NAME', skipping"
-    SKIPPED=$((SKIPPED + 1))
-    continue
-  fi
+  WINNER_STATUS=$(echo "$WINNER" | jq -r '.status')
+  WINNER_PROJECT=$(echo "$WINNER" | jq -r '.project_title')
 
-  echo "  [$project_title] '$current_status' -> '$STATUS_NAME'"
+  echo "Issue: $TITLE"
+  echo "  Winner: '$WINNER_STATUS' (from $WINNER_PROJECT)"
 
-  # Get the Status field ID and matching option ID for target project
-  TARGET_FIELD=$(gh api graphql -f query='
-    query($projectId: ID!) {
-      node(id: $projectId) {
-        ... on ProjectV2 {
-          field(name: "Status") {
-            ... on ProjectV2SingleSelectField {
-              id
-              options {
+  while IFS= read -r item; do
+    ITEM_ID=$(echo "$item" | jq -r '.item_id')
+    PROJECT_ID=$(echo "$item" | jq -r '.project_id')
+    PROJECT_TITLE=$(echo "$item" | jq -r '.project_title')
+    CURRENT_STATUS=$(echo "$item" | jq -r '.status // empty')
+
+    # Skip if already matches
+    if [ "$CURRENT_STATUS" = "$WINNER_STATUS" ]; then
+      continue
+    fi
+
+    # Get the Status field and option ID for the target project
+    TARGET_FIELD=$(gh api graphql -f query="
+      { node(id: \"$PROJECT_ID\") {
+          ... on ProjectV2 {
+            field(name: \"Status\") {
+              ... on ProjectV2SingleSelectField {
                 id
-                name
+                options { id name }
               }
             }
           }
         }
-      }
-    }
-  ' -f projectId="$project_id")
+      }" 2>/dev/null || echo '{}')
 
-  TARGET_FIELD_ID=$(echo "$TARGET_FIELD" | jq -r '.data.node.field.id // empty')
-  TARGET_OPTION_ID=$(echo "$TARGET_FIELD" | jq -r --arg status "$STATUS_NAME" '.data.node.field.options[] | select(.name == $status) | .id // empty')
+    TARGET_FIELD_ID=$(echo "$TARGET_FIELD" | jq -r '.data.node.field.id // empty')
+    TARGET_OPTION_ID=$(echo "$TARGET_FIELD" | jq -r --arg s "$WINNER_STATUS" \
+      '.data.node.field.options[] | select(.name == $s) | .id' 2>/dev/null || echo "")
 
-  if [ -z "$TARGET_FIELD_ID" ] || [ -z "$TARGET_OPTION_ID" ]; then
-    echo "  [$project_title] status '$STATUS_NAME' not found in this project, skipping"
-    continue
-  fi
+    if [ -z "$TARGET_FIELD_ID" ] || [ -z "$TARGET_OPTION_ID" ]; then
+      echo "  [$PROJECT_TITLE] '$WINNER_STATUS' not available, skipping"
+      read -r s sk e < "$COUNTER_FILE"; echo "$s $((sk + 1)) $e" > "$COUNTER_FILE"
+      continue
+    fi
 
-  # Update the status
-  gh api graphql -f query='
-    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-      updateProjectV2ItemFieldValue(input: {
-        projectId: $projectId
-        itemId: $itemId
-        fieldId: $fieldId
-        value: { singleSelectOptionId: $optionId }
-      }) {
-        projectV2Item {
-          id
-        }
-      }
-    }
-  ' -f projectId="$project_id" -f itemId="$item_id" -f fieldId="$TARGET_FIELD_ID" -f optionId="$TARGET_OPTION_ID" > /dev/null
+    # Update the status
+    if gh api graphql -f query="
+      mutation {
+        updateProjectV2ItemFieldValue(input: {
+          projectId: \"$PROJECT_ID\"
+          itemId: \"$ITEM_ID\"
+          fieldId: \"$TARGET_FIELD_ID\"
+          value: { singleSelectOptionId: \"$TARGET_OPTION_ID\" }
+        }) { projectV2Item { id } }
+      }" > /dev/null 2>&1; then
+      echo "  [$PROJECT_TITLE] '${CURRENT_STATUS:-none}' -> '$WINNER_STATUS'"
+      read -r s sk e < "$COUNTER_FILE"; echo "$((s + 1)) $sk $e" > "$COUNTER_FILE"
+    else
+      echo "  [$PROJECT_TITLE] FAILED to update"
+      read -r s sk e < "$COUNTER_FILE"; echo "$s $sk $((e + 1))" > "$COUNTER_FILE"
+    fi
+  done < <(echo "$group" | jq -c '.items[]')
 
-  echo "  [$project_title] updated successfully"
-  SYNCED=$((SYNCED + 1))
-done
+  echo ""
+done < <(echo "$MULTI_PROJECT" | jq -c '.[]')
 
-echo "Done. Synced: $SYNCED, Skipped: $SKIPPED"
+read -r SYNCED SKIPPED ERRORS < "$COUNTER_FILE"
+rm -f "$COUNTER_FILE"
+
+echo "=== Done ==="
+echo "Synced: $SYNCED | Skipped: $SKIPPED | Errors: $ERRORS"
