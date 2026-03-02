@@ -1,0 +1,27 @@
+name: Sync Project Status
+
+# Syncs the Status field across all projects an issue belongs to.
+# When Status changes in any org project, all other projects containing
+# that same issue get updated to match.
+#
+# Requires a PAT or GitHub App token with org project read/write permissions
+# stored as PROJECT_SYNC_TOKEN secret.
+
+on:
+  projects_v2_item:
+    types: [edited]
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync status across projects
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ITEM_NODE_ID: ${{ github.event.projects_v2_item.node_id }}
+          PROJECT_NODE_ID: ${{ github.event.projects_v2_item.project_node_id }}
+          CONTENT_NODE_ID: ${{ github.event.projects_v2_item.content_node_id }}
+          FIELD_NODE_ID: ${{ github.event.changes.field_value.field_node_id }}
+        run: bash .github/scripts/sync-project-status.sh
