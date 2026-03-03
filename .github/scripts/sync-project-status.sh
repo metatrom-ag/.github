@@ -24,9 +24,9 @@ echo ""
 # --- Step 1: Get all org projects with their Status field options ---
 
 PROJECTS_QUERY='
-query($org: String!, $cursor: String) {
+query($org: String!) {
   organization(login: $org) {
-    projectsV2(first: 20, after: $cursor) {
+    projectsV2(first: 20) {
       nodes {
         id
         title
@@ -112,6 +112,19 @@ ITEMS_JSON=$(echo "$PROJECTS_DATA" | jq --argjson eligible "$ELIGIBLE_IDS" '
   ]
 ')
 
+# --- Diagnostic: item counts per project ---
+TOTAL_ITEMS=$(echo "$ITEMS_JSON" | jq 'length')
+echo "Extracted $TOTAL_ITEMS items across eligible projects:"
+echo "$ITEMS_JSON" | jq -r 'group_by(.project_number) | .[] | "  #\(.[0].project_number) \(.[0].project_title): \(length) items"'
+if [ "$TOTAL_ITEMS" = "0" ]; then
+  echo ""
+  echo "WARNING: Zero items extracted. The PAT likely lacks repository-level"
+  echo "read access (Issues: Read, Pull requests: Read) needed to resolve"
+  echo "issue/PR content inside project items."
+  exit 0
+fi
+echo ""
+
 # Group by content_id and find items in multiple eligible projects
 MULTI_PROJECT=$(echo "$ITEMS_JSON" | jq '
   group_by(.content_id) |
@@ -129,8 +142,10 @@ MULTI_PROJECT=$(echo "$ITEMS_JSON" | jq '
   )
 ')
 
+# --- Diagnostic: multi-project group count ---
+SHARED_COUNT=$(echo "$ITEMS_JSON" | jq 'group_by(.content_id) | map(select(length > 1)) | length')
 MISMATCH_COUNT=$(echo "$MULTI_PROJECT" | jq 'length')
-echo "Found $MISMATCH_COUNT issues with mismatched statuses across eligible projects"
+echo "Found $SHARED_COUNT issues shared across projects, $MISMATCH_COUNT with mismatched statuses"
 echo ""
 
 if [ "$MISMATCH_COUNT" = "0" ]; then
