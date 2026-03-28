@@ -1,0 +1,21 @@
+name: Sync Issue Fields on Edit
+
+# Triggers immediately when an issue is created or edited so Priority,
+# Size, Estimate, and Labels reflect in project boards within seconds.
+# The same script also runs on the 5-minute schedule via sync-project-status.yml.
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled]
+
+jobs:
+  sync-fields:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Sync issue fields to project items
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ORG: metatrom-ag
+        run: bash .github/scripts/sync-issue-fields.sh
