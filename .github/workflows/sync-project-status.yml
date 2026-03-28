@@ -1,0 +1,28 @@
+name: Sync Project Status
+
+# Polls Ontocratic template-compatible projects for issues that exist
+# in multiple projects with mismatched Status values. When found, syncs
+# to the most recently updated status. Runs every 5 minutes.
+#
+# Template detection: Only projects whose Status field contains the core
+# Ontocratic statuses (Purpose, Intention, Action) participate in sync.
+#
+# Requires a PAT with org project read/write permissions
+# stored as PROJECT_SYNC_TOKEN secret.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # allow manual trigger for testing
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync status across projects
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ORG: metatrom-ag
+        run: bash .github/scripts/sync-project-status.sh
