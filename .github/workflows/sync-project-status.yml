@@ -13,7 +13,8 @@ name: Sync Project Status
 on:
   schedule:
     - cron: '*/5 * * * *'
-  workflow_dispatch: # allow manual trigger for testing
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   sync-status:
