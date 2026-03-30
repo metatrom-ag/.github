@@ -1,0 +1,25 @@
+name: Sync Global Project
+
+# Adds all open issues from non-archived org repos to the Global project (#6).
+# Issues not yet in the project are added with Status = Inbox.
+# Issues already in the project with no Status are also set to Inbox.
+#
+# Runs daily at 07:00 UTC (after the dashboard update at 06:00).
+# Can also be triggered manually.
+
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Sync all org issues into Global project
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ORG: metatrom-ag
+        run: bash .github/scripts/sync-global-project.sh
