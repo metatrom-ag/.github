@@ -32,7 +32,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git diff --quiet || (
-            git add profile/README.md .github/dashboard.config.json _data/velocity.json &&
-            git commit -m "chore: update dashboard KPIs [skip ci]" &&
+            git add profile/README.md .github/dashboard.config.json _data/velocity.json _data/alert-state.json &&
+            git commit -m "chore: update dashboard [skip ci]" &&
             git push
           )
