@@ -6,7 +6,7 @@ on:
 jobs:
   assign:
     if: |
-      contains(github.event.issue.labels.*.name, 'action') &&
+      contains(github.event.issue.labels.*.name, 'ready') &&
       github.event.issue.assignees[0] == null
     runs-on: ubuntu-latest
     permissions:
