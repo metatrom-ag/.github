@@ -22,6 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Sync labels to all org repos
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ORG: metatrom-ag
+        run: bash .github/scripts/sync-labels.sh
+
       - name: Sync status across projects
         env:
           GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
