@@ -60,6 +60,7 @@ query($org: String!) {
         items(first: 100) {
           nodes {
             id
+            updatedAt
             fieldValues(first: 30) {
               nodes {
                 __typename
@@ -137,6 +138,7 @@ ALL_ITEMS=$(echo "$ELIGIBLE_PROJECTS" | jq '
     . as $item |
     {
       item_id: .id,
+      updated_at: .updatedAt,
       content_id: .content.id,
       title: .content.title,
       body: (.content.body // ""),
@@ -353,9 +355,12 @@ while IFS= read -r content_id; do
   while IFS= read -r field_name; do
     should_skip_field "$field_name" && continue
 
-    # Find first item that has a value for this field
-    SOURCE_JSON=$(echo "$ISSUE_ITEMS" | jq -c --arg fn "$field_name" \
-      'first(.[] | .field_values[] | select(.name == $fn and .value != null and .value != "")) // empty')
+    # Find the most recently updated item that has a value for this field (latest wins)
+    SOURCE_JSON=$(echo "$ISSUE_ITEMS" | jq -c --arg fn "$field_name" '
+      [.[] | . as $item | .field_values[] |
+        select(.name == $fn and .value != null and .value != "") |
+        {type, option_name, value, updated_at: $item.updated_at}
+      ] | sort_by(.updated_at) | last // empty')
 
     [ -z "$SOURCE_JSON" ] && continue
 
@@ -368,6 +373,11 @@ while IFS= read -r content_id; do
       ITEM_ID=$(echo "$item" | jq -r '.item_id')
       PROJECT_ID=$(echo "$item" | jq -r '.project_id')
       PROJECT_TITLE=$(echo "$item" | jq -r '.project_title')
+
+      # Skip if this item already has the correct value
+      CURRENT_VAL=$(echo "$item" | jq -r --arg fn "$field_name" \
+        '.field_values[] | select(.name == $fn) | .option_name // ""')
+      [ "$CURRENT_VAL" = "$OPTION_NAME" ] && continue
 
       # Find this field in the target project by name
       TARGET_FIELD=$(echo "$item" | jq -c --arg fn "$field_name" \
