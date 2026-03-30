@@ -1,30 +1,36 @@
 name: Refresh Dashboard
 
-# Triggers the full dashboard refresh pipeline in order:
-#   1. Sync Global Project  — adds missing issues to projects, sets Inbox
-#   2. Sync Iterations      — copies Iteration/Quarter from Global to repo projects
-#   3. Update Dashboard     — fetches stats and commits updated README
+# Full refresh pipeline — runs all sync and dashboard workflows in order:
+#   1. Sync Global Project   — adds missing issues, sets Inbox
+#   2. Sync Project Status   — syncs Status + issue fields across projects
+#   3. Sync Iterations       — copies Iteration/Quarter from Global to repo projects
+#   4. Update Dashboard      — fetches stats and commits updated README
 #
-# Use this when you want an immediate full refresh outside the daily schedule.
-# The daily schedule still runs all workflows independently at 05:00 / 05:30 / 06:00 UTC.
+# Use this for an immediate full refresh outside the daily schedule.
 
 on:
   workflow_dispatch:
 
 jobs:
-  sync:
+  sync-global:
     name: Sync Global Project
     uses: metatrom-ag/.github/.github/workflows/sync-global-project.yml@main
     secrets: inherit
 
-  iterations:
+  sync-status:
+    name: Sync Project Status & Fields
+    needs: sync-global
+    uses: metatrom-ag/.github/.github/workflows/sync-project-status.yml@main
+    secrets: inherit
+
+  sync-iterations:
     name: Sync Iterations & Quarters
-    needs: sync
+    needs: sync-status
     uses: metatrom-ag/.github/.github/workflows/sync-iterations.yml@main
     secrets: inherit
 
   dashboard:
     name: Update Dashboard
-    needs: iterations
+    needs: sync-iterations
     uses: metatrom-ag/.github/.github/workflows/update-private-dashboard.yml@main
     secrets: inherit
