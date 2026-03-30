@@ -1,0 +1,24 @@
+name: Sync Iterations & Quarters
+
+# Copies Iteration and Quarter field values from Global (#6) to all
+# Ontocratic repo-specific projects (matched by name convention).
+# Runs daily at 05:30 UTC (after sync-global-project at 05:00, before dashboard at 06:00).
+# Can also be triggered manually or called by refresh-dashboard.yml.
+
+on:
+  schedule:
+    - cron: '30 5 * * *'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Sync Iteration and Quarter from Global to repo projects
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+          ORG: metatrom-ag
+        run: bash .github/scripts/sync-iterations.sh
