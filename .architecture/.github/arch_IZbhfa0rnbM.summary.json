@@ -1,0 +1,34 @@
+{
+	"appVersion": "3.9.0",
+	"schemaVersion": "1.5",
+	"owner": {
+		"username": null,
+		"fullname": null,
+		"email": null
+	},
+	"template": {
+		"description": "Default ToC",
+		"isGlobalDefaultTemplate": true,
+		"name": "Solution Architecture Template",
+		"_id": "template_company_ibm"
+	},
+	"geography": [],
+	"businessUnit": [],
+	"includedArtifacts": [],
+	"industry": [],
+	"technology": [],
+	"technicalCapability": [],
+	"businessCapability": [],
+	"executiveSummary": "",
+	"tag": [],
+	"name": ".github",
+	"_id": "arch_IZbhfa0rnbM",
+	"status": "Pending",
+	"type": "Solution",
+	"created": null,
+	"numOfCopied": 0,
+	"lastModified": "2026-03-30 07:34:52",
+	"clientName": "",
+	"salesConnectNum": "",
+	"taxonomies": []
+}

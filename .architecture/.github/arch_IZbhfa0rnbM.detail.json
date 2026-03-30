@@ -1,0 +1,418 @@
+{
+	"toc": [
+		{
+			"globalTOCPosition": "1",
+			"artifactTypeName": "Overview",
+			"artifactType": "assetartifact_executivesummary",
+			"displayName": "Overview",
+			"format": "text",
+			"typeId": "1",
+			"_id": "artifacttype_9edbd406-69fb-3a95-8b2e-58a0974b2710",
+			"child": [],
+			"hasContent": false
+		},
+		{
+			"globalTOCPosition": "2",
+			"parentGroup": "",
+			"_id": "artifactgroup_7dc829db-0746-3ddc-816c-d07338d4eebf",
+			"displayName": "Scope",
+			"child": [
+				{
+					"artifactTypeName": "Business Challenge",
+					"globalTOCPosition": "2.1",
+					"artifactType": "assetartifact_businesschallenge",
+					"displayName": "Business Challenge",
+					"format": "text",
+					"typeId": "2.1",
+					"_id": "artifacttype_d1ab4a95-e05f-3882-9f19-6500fc0d3b2b",
+					"hasContent": false
+				},
+				{
+					"globalTOCPosition": "2.2",
+					"artifactTypeName": "System Context",
+					"artifactType": "assetartifact_systemcontext",
+					"displayName": "System Context",
+					"format": "diagram",
+					"typeId": "2.2",
+					"_id": "artifacttype_8ca70362-e3d1-3b9c-91d1-f755d029a2e3",
+					"hasContent": false
+				}
+			]
+		},
+		{
+			"globalTOCPosition": "3",
+			"parentGroup": "",
+			"_id": "artifactgroup_3b8700e6-c854-3ec9-af0e-9b2e600721ce",
+			"displayName": "Requirement",
+			"child": [
+				{
+					"globalTOCPosition": "3.1",
+					"parentGroup": "artifactgroup_3b8700e6-c854-3ec9-af0e-9b2e600721ce",
+					"_id": "artifactgroup_6e299154-751f-36ee-acb2-145c8af87481",
+					"displayName": "Use Case Model",
+					"child": [
+						{
+							"artifactTypeName": "Use Case Diagram",
+							"globalTOCPosition": "3.1.1",
+							"artifactType": "assetartifact_usecase_ucdiagram",
+							"displayName": "Use Case Diagram",
+							"format": "diagram",
+							"typeId": "3.1.1",
+							"_id": "artifacttype_cde39d5e-c892-3093-ab3d-bad448acb8a0",
+							"hasContent": false
+						},
+						{
+							"globalTOCPosition": "3.1.2",
+							"artifactTypeName": "Use Case",
+							"artifactType": "assetartifact_usecase_uctext",
+							"displayName": "Use Case",
+							"format": "text",
+							"typeId": "3.1.2",
+							"_id": "artifacttype_dde4b71c-82db-3f66-964a-3a04fbf56dff",
+							"hasContent": false
+						}
+					]
+				},
+				{
+					"artifactTypeName": "Functional Requirements",
+					"globalTOCPosition": "3.2",
+					"artifactType": "assetartifact_functionalrequirement",
+					"displayName": "Functional Requirements",
+					"format": "text",
+					"typeId": "3.2",
+					"_id": "artifacttype_12eefe0a-435b-3176-8bbe-4dc928a2e4c3",
+					"hasContent": false
+				},
+				{
+					"artifactTypeName": "Non Functional Requirements",
+					"globalTOCPosition": "3.3",
+					"artifactType": "assetartifact_nonfunctionalrequirement",
+					"displayName": "Non Functional Requirements",
+					"format": "text",
+					"typeId": "3.3",
+					"_id": "artifacttype_f0eebd79-15c9-3ebc-a73b-8efc3f634f59",
+					"hasContent": false
+				}
+			]
+		},
+		{
+			"globalTOCPosition": "4",
+			"parentGroup": "",
+			"_id": "artifactgroup_40044cbe-6c76-33a1-b9e0-eab8937d30ca",
+			"displayName": "Data Model",
+			"child": [
+				{
+					"artifactTypeName": "Logical Data Model",
+					"globalTOCPosition": "4.1",
+					"artifactType": "assetartifact_logical_datamodel",
+					"displayName": "Logical Data Model",
+					"format": "diagram",
+					"typeId": "4.1",
+					"_id": "artifacttype_246bc46f-0286-3ad4-bf01-679592db59c7",
+					"hasContent": false
+				}
+			]
+		},
+		{
+			"globalTOCPosition": "5",
+			"parentGroup": "",
+			"_id": "artifactgroup_074a2b74-43d8-315a-b88b-c0b421754f02",
+			"displayName": "Architecture",
+			"child": [
+				{
+					"globalTOCPosition": "5.1",
+					"parentGroup": "artifactgroup_074a2b74-43d8-315a-b88b-c0b421754f02",
+					"_id": "artifactgroup_771e7b65-3b46-390d-bc41-3c88cfaf13ef",
+					"displayName": "Architecture Overview",
+					"child": [
+						{
+							"artifactTypeName": "Services View",
+							"globalTOCPosition": "5.1.1",
+							"artifactType": "assetartifact_architectureoverview_aodservice",
+							"displayName": "Services View",
+							"format": "diagram",
+							"typeId": "5.1.1",
+							"_id": "artifacttype_2c548a13-6bd9-3edc-a496-0318af82f0d1",
+							"hasContent": false
+						},
+						{
+							"artifactTypeName": "Enterprise View",
+							"globalTOCPosition": "5.1.2",
+							"artifactType": "assetartifact_architectureoverview_enterprise",
+							"displayName": "Enterprise View",
+							"format": "diagram",
+							"typeId": "5.1.2",
+							"_id": "artifacttype_16bfe592-ae95-371c-9f64-3a881b667707",
+							"hasContent": false
+						},
+						{
+							"artifactTypeName": "IT System View",
+							"globalTOCPosition": "5.1.3",
+							"artifactType": "assetartifact_architectureoverview_itsystem",
+							"displayName": "IT System View",
+							"format": "diagram",
+							"typeId": "5.1.3",
+							"_id": "artifacttype_355f72be-6566-3f48-8b15-c30f671d7c8f",
+							"hasContent": false
+						},
+						{
+							"artifactTypeName": "Usage Scenario",
+							"globalTOCPosition": "5.1.4",
+							"artifactType": "assetartifact_architectureoverview_usagescenario",
+							"displayName": "Usage Scenario",
+							"format": "diagram",
+							"typeId": "5.1.4",
+							"_id": "artifacttype_d118451c-0816-3aa5-8b89-3119feb4168a",
+							"hasContent": false
+						}
+					]
+				},
+				{
+					"artifactTypeName": "Architectural Decisions",
+					"globalTOCPosition": "5.2",
+					"artifactType": "assetartifact_architecturedecision",
+					"displayName": "Architectural Decisions",
+					"format": "text",
+					"typeId": "5.2",
+					"_id": "artifacttype_fddae3fa-aafa-32af-94a4-bc3e1ed255cc",
+					"parentGroup": "artifactgroup_074a2b74-43d8-315a-b88b-c0b421754f02",
+					"child": [],
+					"hasContent": false
+				},
+				{
+					"globalTOCPosition": "5.3",
+					"parentGroup": "artifactgroup_074a2b74-43d8-315a-b88b-c0b421754f02",
+					"_id": "artifactgroup_c848fca1-3956-3bb4-8c88-8815b99e00fc",
+					"displayName": "Component Model",
+					"child": [
+						{
+							"artifactTypeName": "Static View",
+							"globalTOCPosition": "5.3.1",
+							"artifactType": "assetartifact_componentmodel_staticview",
+							"displayName": "Static View",
+							"format": "diagram",
+							"typeId": "5.3.1",
+							"_id": "artifacttype_4a44b8fa-5057-3826-84d7-169a6fc1f2ed",
+							"hasContent": false
+						},
+						{
+							"artifactTypeName": "Sequence View",
+							"globalTOCPosition": "5.3.2",
+							"artifactType": "assetartifact_componentmodel_dynamicview",
+							"displayName": "Sequence View",
+							"format": "diagram",
+							"typeId": "5.3.2",
+							"_id": "artifacttype_6e1239a1-6a68-3dae-ae87-b05ecf80d25b",
+							"hasContent": false
+						},
+						{
+							"globalTOCPosition": "5.3.3",
+							"artifactTypeName": "Collaboration View",
+							"artifactType": "assetartifact_componentmodel_collaborationdiagram",
+							"displayName": "Collaboration View",
+							"format": "diagram",
+							"typeId": "5.3.3",
+							"_id": "artifacttype_217cdbd4-c76f-3355-a3b1-443b0a0d2651",
+							"hasContent": false
+						}
+					]
+				},
+				{
+					"globalTOCPosition": "5.4",
+					"parentGroup": "artifactgroup_074a2b74-43d8-315a-b88b-c0b421754f02",
+					"_id": "artifactgroup_aef1c0cc-540d-31c6-8817-ac2b282f37d3",
+					"displayName": "Operational Model",
+					"child": [
+						{
+							"artifactTypeName": "Logical Operational View",
+							"globalTOCPosition": "5.4.1",
+							"artifactType": "assetartifact_operationalmodel_logicaloperational",
+							"displayName": "Logical Operational View",
+							"format": "diagram",
+							"typeId": "5.4.1",
+							"_id": "artifacttype_5ca43d50-d7da-322f-a1b0-f65b0c12b2c8",
+							"hasContent": false
+						},
+						{
+							"artifactTypeName": "Prescribed Operational View",
+							"globalTOCPosition": "5.4.2",
+							"artifactType": "assetartifact_operationalmodel_physicaloperational",
+							"displayName": "Prescribed Operational View",
+							"format": "diagram",
+							"typeId": "5.4.2",
+							"_id": "artifacttype_7503dbb1-18f7-36ac-ad12-98d977ef3d0d",
+							"hasContent": false
+						}
+					]
+				}
+			]
+		},
+		{
+			"globalTOCPosition": "6",
+			"parentGroup": "",
+			"_id": "artifactgroup_7cddcb3d-c508-3828-8893-128dc3d6c8b7",
+			"displayName": "RAID",
+			"child": [
+				{
+					"globalTOCPosition": "6.1",
+					"artifactTypeName": "Risks",
+					"artifactType": "assetartifact_risk",
+					"displayName": "Risks",
+					"format": "text",
+					"typeId": "6.1",
+					"_id": "artifacttype_94622837-e58f-34c3-9263-8260b69601c8",
+					"hasContent": false
+				},
+				{
+					"globalTOCPosition": "6.2",
+					"artifactTypeName": "Assumptions",
+					"artifactType": "assetartifact_assumption",
+					"displayName": "Assumptions",
+					"format": "text",
+					"typeId": "6.2",
+					"_id": "artifacttype_2142b656-62ba-304d-95d4-77b1b144e5e1",
+					"hasContent": false
+				},
+				{
+					"globalTOCPosition": "6.3",
+					"artifactTypeName": "Issues",
+					"artifactType": "assetartifact_issue",
+					"displayName": "Issues",
+					"format": "text",
+					"typeId": "6.3",
+					"_id": "artifacttype_f4d01807-f847-3ccd-87a2-32877074295e",
+					"hasContent": false
+				},
+				{
+					"globalTOCPosition": "6.4",
+					"artifactTypeName": "Dependencies",
+					"artifactType": "assetartifact_dependency",
+					"displayName": "Dependencies",
+					"format": "text",
+					"typeId": "6.4",
+					"_id": "artifacttype_9c5463b3-5c9e-3790-86cb-9b8866cc062a",
+					"hasContent": false
+				}
+			]
+		},
+		{
+			"artifactTypeName": "Architectural Principles",
+			"globalTOCPosition": "7",
+			"artifactType": "assetartifact_architecture_principles",
+			"displayName": "Architectural Principles",
+			"format": "text",
+			"typeId": "7",
+			"_id": "artifacttype_92ccfc5d-c31a-349d-97c0-6d75c8841a8a",
+			"child": [],
+			"hasContent": false
+		},
+		{
+			"artifactTypeName": "Misc Diagram",
+			"globalTOCPosition": "8",
+			"artifactType": "assetartifact_miscdiagram",
+			"displayName": "Misc Diagram",
+			"format": "diagram",
+			"typeId": "9",
+			"_id": "artifacttype_23219eb8-b210-3e5a-8621-9881bee93055",
+			"child": [],
+			"hasContent": false
+		},
+		{
+			"artifactTypeName": "Notes",
+			"globalTOCPosition": "9",
+			"artifactType": "assetartifact_notes",
+			"displayName": "Notes",
+			"format": "text",
+			"typeId": "8",
+			"_id": "artifacttype_02226b19-474e-37a6-ab39-d9bb31767fb5",
+			"child": [],
+			"hasContent": false
+		}
+	],
+	"toc_cards": {
+		"executivesummary": {
+			"artifacttype_9edbd406-69fb-3a95-8b2e-58a0974b2710": []
+		},
+		"businesschallenge": {
+			"artifacttype_d1ab4a95-e05f-3882-9f19-6500fc0d3b2b": []
+		},
+		"systemContext": {
+			"artifacttype_8ca70362-e3d1-3b9c-91d1-f755d029a2e3": []
+		},
+		"useCaseViews": {
+			"artifacttype_cde39d5e-c892-3093-ab3d-bad448acb8a0": []
+		},
+		"usecasetext": {
+			"artifacttype_dde4b71c-82db-3f66-964a-3a04fbf56dff": []
+		},
+		"functionalrequirement": {
+			"artifacttype_12eefe0a-435b-3176-8bbe-4dc928a2e4c3": []
+		},
+		"nonfunctionalrequirement": {
+			"artifacttype_f0eebd79-15c9-3ebc-a73b-8efc3f634f59": []
+		},
+		"logicalERD": {
+			"artifacttype_246bc46f-0286-3ad4-bf01-679592db59c7": []
+		},
+		"aodServices": {
+			"artifacttype_2c548a13-6bd9-3edc-a496-0318af82f0d1": []
+		},
+		"aodEnterprises": {
+			"artifacttype_16bfe592-ae95-371c-9f64-3a881b667707": []
+		},
+		"aodITSystems": {
+			"artifacttype_355f72be-6566-3f48-8b15-c30f671d7c8f": []
+		},
+		"aodUsageScenarios": {
+			"artifacttype_d118451c-0816-3aa5-8b89-3119feb4168a": []
+		},
+		"architecturaldecision": {
+			"artifacttype_fddae3fa-aafa-32af-94a4-bc3e1ed255cc": []
+		},
+		"cmStaticViews": {
+			"artifacttype_4a44b8fa-5057-3826-84d7-169a6fc1f2ed": []
+		},
+		"cmDynamicViews": {
+			"artifacttype_6e1239a1-6a68-3dae-ae87-b05ecf80d25b": []
+		},
+		"cmCollaboration": {
+			"artifacttype_217cdbd4-c76f-3355-a3b1-443b0a0d2651": []
+		},
+		"lomViews": {
+			"artifacttype_5ca43d50-d7da-322f-a1b0-f65b0c12b2c8": []
+		},
+		"lomPhysicalViews": {
+			"artifacttype_7503dbb1-18f7-36ac-ad12-98d977ef3d0d": []
+		},
+		"miscDiagram": {
+			"artifacttype_23219eb8-b210-3e5a-8621-9881bee93055": []
+		},
+		"risk": {
+			"artifacttype_94622837-e58f-34c3-9263-8260b69601c8": []
+		},
+		"assumption": {
+			"artifacttype_2142b656-62ba-304d-95d4-77b1b144e5e1": []
+		},
+		"issue": {
+			"artifacttype_f4d01807-f847-3ccd-87a2-32877074295e": []
+		},
+		"dependency": {
+			"artifacttype_9c5463b3-5c9e-3790-86cb-9b8866cc062a": []
+		},
+		"architectureprinciple": {
+			"artifacttype_92ccfc5d-c31a-349d-97c0-6d75c8841a8a": []
+		},
+		"notes": {
+			"artifacttype_02226b19-474e-37a6-ab39-d9bb31767fb5": []
+		}
+	},
+	"textual": {
+		"instances": {}
+	},
+	"diagram": {
+		"instances": {}
+	},
+	"combined": {
+		"coreInfo": []
+	}
+}
