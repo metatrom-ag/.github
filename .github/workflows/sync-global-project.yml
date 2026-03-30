@@ -4,13 +4,14 @@ name: Sync Global Project
 # Issues not yet in the project are added with Status = Inbox.
 # Issues already in the project with no Status are also set to Inbox.
 #
-# Runs daily at 07:00 UTC (after the dashboard update at 06:00).
-# Can also be triggered manually.
+# Runs daily at 05:00 UTC (1 hour before the dashboard update at 06:00).
+# Can also be triggered manually or called by refresh-dashboard.yml.
 
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   sync:
