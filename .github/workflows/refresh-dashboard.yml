@@ -1,13 +1,16 @@
 name: Refresh Dashboard
 
-# Full refresh pipeline — runs all sync and dashboard workflows in order:
-#   1. Sync Global Project   — adds missing issues, sets Inbox
+# Full dashboard refresh pipeline — runs daily and on demand:
+#   1. Sync Global Project   — adds missing issues to projects, sets Inbox
 #   2. Sync Project Status   — syncs Status, Iteration, Quarter, and all issue fields
-#   3. Update Dashboard      — fetches stats and commits updated README
+#   3. Update Dashboard      — fetches stats and commits updated README to .github-private
 #
-# Use this for an immediate full refresh outside the daily schedule.
+# Daily schedule runs the full pipeline starting at 05:00 UTC.
+# Can also be triggered manually for an immediate refresh.
 
 on:
+  schedule:
+    - cron: '0 5 * * *'
   workflow_dispatch:
 
 jobs:
@@ -25,5 +28,28 @@ jobs:
   dashboard:
     name: Update Dashboard
     needs: sync-status
-    uses: metatrom-ag/.github/.github/workflows/update-private-dashboard.yml@main
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          repository: metatrom-ag/.github-private
+          token: ${{ secrets.PROJECT_SYNC_TOKEN }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '23'
+
+      - name: Fetch project stats and update README
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_SYNC_TOKEN }}
+        run: node .github/scripts/update-dashboard.js
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet || (
+            git add profile/README.md .github/dashboard.config.json _data/velocity.json _data/alert-state.json &&
+            git commit -m "chore: update dashboard [skip ci]" &&
+            git push
+          )
