@@ -9,8 +9,8 @@ set -euo pipefail
 # Projects without Purpose/Intention/Action status options are skipped.
 #
 # For each issue:
-#   - If not yet in a target project → add it and set Status to Inbox
-#   - If already in a target project but has no Status → set Status to Inbox
+#   - addProjectV2ItemById is idempotent: returns existing item if already present.
+#   - If the returned item has no Status → set it to Inbox.
 #
 # Runs daily (see sync-global-project.yml).
 
@@ -36,7 +36,7 @@ REPOS=$(gh api graphql -f query='
       }
     }
   }
-' -f org="$ORG" --paginate -q '.data.organization.repositories.nodes[].name' 2>/dev/null | sort)
+' -f org="$ORG" --paginate -q '.data.organization.repositories.nodes[].name' | sort)
 
 REPO_COUNT=$(echo "$REPOS" | wc -l | tr -d ' ')
 echo "Found $REPO_COUNT non-archived repos"
@@ -71,9 +71,8 @@ query($org: String!, $cursor: String) {
 ALL_PROJECTS_RAW=$(gh api graphql \
   -f query="$ALL_PROJECTS_QUERY" \
   -f org="$ORG" \
-  --paginate 2>/dev/null)
+  --paginate)
 
-# Parse into JSON array of all projects
 ALL_PROJECTS_JSON=$(echo "$ALL_PROJECTS_RAW" | jq -s '[.[].data.organization.projectsV2.nodes[]]')
 
 # Build associative maps:
@@ -84,12 +83,10 @@ declare -A PROJECT_BY_NAME
 declare -A PROJECT_STATUS_FIELD
 declare -A PROJECT_INBOX_OPT
 
-# Parse each project: only keep Ontocratic ones (have Purpose AND Intention AND Action)
 while IFS=$'\t' read -r proj_id proj_num proj_title field_id options_json; do
   [ -z "$proj_id" ] && continue
   [ -z "$field_id" ] && continue
 
-  # Check for Purpose, Intention, Action
   has_purpose=$(echo "$options_json" | jq 'map(.name) | contains(["Purpose"])' 2>/dev/null || echo "false")
   has_intention=$(echo "$options_json" | jq 'map(.name) | contains(["Intention"])' 2>/dev/null || echo "false")
   has_action=$(echo "$options_json" | jq 'map(.name) | contains(["Action"])' 2>/dev/null || echo "false")
@@ -98,7 +95,6 @@ while IFS=$'\t' read -r proj_id proj_num proj_title field_id options_json; do
     continue
   fi
 
-  # Find Inbox option ID
   inbox_opt=$(echo "$options_json" | jq -r '.[] | select(.name == "Inbox") | .id' 2>/dev/null)
   [ -z "$inbox_opt" ] && continue
 
@@ -119,131 +115,51 @@ echo ""
 echo "Ontocratic projects indexed: ${#PROJECT_BY_NAME[@]}"
 echo ""
 
-# --- Step 3: Build "already in project" lookup for all relevant projects ---
-# Key: "proj_id:issue_node_id" → project item ID
-declare -A IN_PROJECT
+# --- Step 3: For each repo, add open issues to target projects ---
+#
+# addProjectV2ItemById is idempotent: if the issue is already in the project it
+# returns the existing item — no duplicate is created. The mutation also returns
+# the item's current Status, so we can set Inbox in one extra call only when
+# needed. This replaces the previous approach of pre-fetching all project items,
+# which scaled poorly and caused multi-minute timeouts on large projects.
 
-ITEMS_QUERY='
-query($proj: Int!, $org: String!, $cursor: String) {
-  organization(login: $org) {
-    projectV2(number: $proj) {
-      items(first: 100, after: $cursor) {
-        pageInfo { hasNextPage endCursor }
-        nodes {
-          id
-          fieldValueByName(name: "Status") {
-            ... on ProjectV2ItemFieldSingleSelectValue { optionId }
-          }
-          content {
-            ... on Issue { id }
-          }
-        }
+INBOX_SET=0
+ALREADY_TRACKED=0
+ERRORS=0
+
+# Mutation returns item ID + current Status in one round trip.
+ADD_ITEM_QUERY='
+mutation($projectId: ID!, $contentId: ID!) {
+  addProjectV2ItemById(input: {
+    projectId: $projectId
+    contentId: $contentId
+  }) {
+    item {
+      id
+      fieldValueByName(name: "Status") {
+        ... on ProjectV2ItemFieldSingleSelectValue { optionId }
       }
     }
   }
-}
-'
-
-# Collect unique project numbers to fetch: always Global + any name-matched projects
-declare -A PROJ_NUM_TO_ID
-PROJ_NUM_TO_ID["$GLOBAL_PROJECT_NUMBER"]="$GLOBAL_PROJECT_ID"
-
-for proj_name in "${!PROJECT_BY_NAME[@]}"; do
-  proj_id="${PROJECT_BY_NAME[$proj_name]}"
-  proj_num=$(echo "$ALL_PROJECTS_JSON" | jq -r --arg id "$proj_id" '.[] | select(.id == $id) | .number')
-  [ -n "$proj_num" ] && PROJ_NUM_TO_ID["$proj_num"]="$proj_id"
-done
-
-echo "Fetching existing items from ${#PROJ_NUM_TO_ID[@]} projects..."
-
-NO_STATUS_BY_PROJECT=()  # "proj_id:item_id" pairs needing Inbox
-
-for proj_num in "${!PROJ_NUM_TO_ID[@]}"; do
-  proj_id="${PROJ_NUM_TO_ID[$proj_num]}"
-
-  RAW=$(gh api graphql \
-    -f query="$ITEMS_QUERY" \
-    -f org="$ORG" \
-    -F proj="$proj_num" \
-    --paginate 2>/dev/null)
-
-  item_count=0
-
-  while IFS=$'\t' read -r item_id issue_id option_id; do
-    [ -z "$item_id" ] && continue
-    [ -z "$issue_id" ] && continue
-    IN_PROJECT["${proj_id}:${issue_id}"]="$item_id"
-    item_count=$((item_count + 1))
-    if [ -z "$option_id" ] || [ "$option_id" = "null" ]; then
-      NO_STATUS_BY_PROJECT+=("${proj_id}:${item_id}")
-    fi
-  done < <(echo "$RAW" | jq -rs '
-    [.[].data.organization.projectV2.items.nodes[] | select(.content.id != null)] |
-    .[] | [.id, .content.id, (.fieldValueByName.optionId // "")] | @tsv
-  ' 2>/dev/null)
-
-  echo "  Project #$proj_num: $item_count items"
-done
-echo ""
-
-# --- Step 4: Set Inbox on existing items with no status ---
-
-NO_STATUS_COUNT=${#NO_STATUS_BY_PROJECT[@]}
-echo "--- Setting Inbox on $NO_STATUS_COUNT existing items with no status ---"
-
-for entry in "${NO_STATUS_BY_PROJECT[@]}"; do
-  proj_id="${entry%%:*}"
-  item_id="${entry##*:}"
-
-  if [ "$proj_id" = "$GLOBAL_PROJECT_ID" ]; then
-    field_id="$GLOBAL_STATUS_FIELD_ID"
-    inbox_opt="$GLOBAL_INBOX_OPTION_ID"
-  else
-    field_id="${PROJECT_STATUS_FIELD[$proj_id]:-}"
-    inbox_opt="${PROJECT_INBOX_OPT[$proj_id]:-}"
-  fi
-
-  [ -z "$field_id" ] && continue
-  [ -z "$inbox_opt" ] && continue
-
-  if gh api graphql -f query="
-    mutation {
-      updateProjectV2ItemFieldValue(input: {
-        projectId: \"$proj_id\"
-        itemId: \"$item_id\"
-        fieldId: \"$field_id\"
-        value: { singleSelectOptionId: \"$inbox_opt\" }
-      }) { projectV2Item { id } }
-    }" > /dev/null 2>&1; then
-    echo "  Set Inbox: $item_id (project $proj_id)"
-  fi
-done
-echo ""
-
-# --- Step 5: For each repo, fetch open issues and add missing ones ---
-
-ADDED=0
-SKIPPED=0
-ERRORS=0
+}'
 
 ISSUES_QUERY='
 query($owner: String!, $repo: String!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
     issues(first: 100, after: $cursor, states: [OPEN]) {
       pageInfo { hasNextPage endCursor }
-      nodes { id number title }
+      nodes { id number }
     }
   }
-}
-'
+}'
 
-echo "--- Adding missing issues to projects ---"
+echo "--- Syncing issues to projects ---"
 echo ""
 
 while IFS= read -r repo; do
   [ -z "$repo" ] && continue
 
-  # Build list of target projects for this repo
+  # Determine target projects for this repo
   target_proj_ids=("$GLOBAL_PROJECT_ID")
   has_named_project=false
   if [[ -v "PROJECT_BY_NAME[$repo]" ]]; then
@@ -262,9 +178,9 @@ while IFS= read -r repo; do
 
   [ -z "$ISSUES" ] && continue
 
-  ISSUE_NODES=$(echo "$ISSUES" | jq -rs '[.[].data.repository.issues.nodes[] | select(.id != null)]' 2>/dev/null || echo "[]")
+  ISSUE_NODES=$(echo "$ISSUES" | \
+    jq -rs '[.[].data.repository.issues.nodes[] | select(.id != null)]' 2>/dev/null || echo "[]")
   ISSUE_COUNT=$(echo "$ISSUE_NODES" | jq 'length')
-
   [ "$ISSUE_COUNT" -eq 0 ] && continue
 
   if [ "$has_named_project" = true ]; then
@@ -273,35 +189,33 @@ while IFS= read -r repo; do
     echo "Repo: $repo ($ISSUE_COUNT open issues → Global only)"
   fi
 
-  while IFS= read -r issue; do
-    ISSUE_ID=$(echo "$issue" | jq -r '.id')
-    ISSUE_NUM=$(echo "$issue" | jq -r '.number')
-
+  while IFS=$'\t' read -r issue_id issue_num; do
     for proj_id in "${target_proj_ids[@]}"; do
-      lookup_key="${proj_id}:${ISSUE_ID}"
-      if [ -n "${IN_PROJECT[$lookup_key]:-}" ]; then
-        SKIPPED=$((SKIPPED + 1))
-        continue
-      fi
 
-      ADD_RESULT=$(gh api graphql -f query="
-        mutation {
-          addProjectV2ItemById(input: {
-            projectId: \"$proj_id\"
-            contentId: \"$ISSUE_ID\"
-          }) { item { id } }
-        }" 2>/dev/null || true)
+      # Add item (idempotent) — also retrieves current Status in the same call
+      ADD_RESULT=$(gh api graphql \
+        -f query="$ADD_ITEM_QUERY" \
+        -f projectId="$proj_id" \
+        -f contentId="$issue_id" 2>/dev/null || echo '{}')
 
-      NEW_ITEM_ID=$(echo "$ADD_RESULT" | jq -r '.data.addProjectV2ItemById.item.id // ""')
+      ITEM_ID=$(echo "$ADD_RESULT" | jq -r '.data.addProjectV2ItemById.item.id // ""')
 
-      if [ -z "$NEW_ITEM_ID" ]; then
-        echo "  ERROR adding #$ISSUE_NUM to $proj_id"
+      if [ -z "$ITEM_ID" ]; then
+        echo "  ERROR: could not add #$issue_num to project $proj_id"
         ERRORS=$((ERRORS + 1))
         continue
       fi
 
-      IN_PROJECT["$lookup_key"]="$NEW_ITEM_ID"
+      CURRENT_OPTION=$(echo "$ADD_RESULT" | \
+        jq -r '.data.addProjectV2ItemById.item.fieldValueByName.optionId // ""')
 
+      # Status already set — nothing to do
+      if [ -n "$CURRENT_OPTION" ]; then
+        ALREADY_TRACKED=$((ALREADY_TRACKED + 1))
+        continue
+      fi
+
+      # No status — set Inbox
       if [ "$proj_id" = "$GLOBAL_PROJECT_ID" ]; then
         field_id="$GLOBAL_STATUS_FIELD_ID"
         inbox_opt="$GLOBAL_INBOX_OPTION_ID"
@@ -310,32 +224,32 @@ while IFS= read -r repo; do
         inbox_opt="${PROJECT_INBOX_OPT[$proj_id]:-}"
       fi
 
-      if [ -n "${field_id:-}" ] && [ -n "${inbox_opt:-}" ]; then
-        if gh api graphql -f query="
-          mutation {
-            updateProjectV2ItemFieldValue(input: {
-              projectId: \"$proj_id\"
-              itemId: \"$NEW_ITEM_ID\"
-              fieldId: \"$field_id\"
-              value: { singleSelectOptionId: \"$inbox_opt\" }
-            }) { projectV2Item { id } }
-          }" > /dev/null 2>&1; then
-          echo "  Added #$ISSUE_NUM → Inbox ($proj_id)"
-          ADDED=$((ADDED + 1))
-        else
-          echo "  Added #$ISSUE_NUM (status set failed, $proj_id)"
-          ADDED=$((ADDED + 1))
-        fi
-      else
-        echo "  Added #$ISSUE_NUM (no status field for $proj_id)"
-        ADDED=$((ADDED + 1))
+      if [ -z "$field_id" ] || [ -z "$inbox_opt" ]; then
+        echo "  #$issue_num: no status field configured for $proj_id"
+        continue
       fi
-    done
 
-  done < <(echo "$ISSUE_NODES" | jq -c '.[]')
+      if gh api graphql -f query="
+        mutation {
+          updateProjectV2ItemFieldValue(input: {
+            projectId: \"$proj_id\"
+            itemId: \"$ITEM_ID\"
+            fieldId: \"$field_id\"
+            value: { singleSelectOptionId: \"$inbox_opt\" }
+          }) { projectV2Item { id } }
+        }" > /dev/null 2>&1; then
+        echo "  #$issue_num → Inbox"
+        INBOX_SET=$((INBOX_SET + 1))
+      else
+        echo "  #$issue_num: added but failed to set Inbox ($proj_id)"
+        ERRORS=$((ERRORS + 1))
+      fi
+
+    done
+  done < <(echo "$ISSUE_NODES" | jq -r '.[] | [.id, (.number | tostring)] | @tsv')
 
 done <<< "$REPOS"
 
 echo ""
 echo "=== Done ==="
-echo "Added: $ADDED | Already present: $SKIPPED | Errors: $ERRORS"
+echo "Inbox set: $INBOX_SET | Already tracked: $ALREADY_TRACKED | Errors: $ERRORS"
