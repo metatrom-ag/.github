@@ -16,6 +16,10 @@ on:
   workflow_dispatch:
   workflow_call:
 
+concurrency:
+  group: sync-project-status
+  cancel-in-progress: true
+
 jobs:
   sync-status:
     runs-on: ubuntu-latest
