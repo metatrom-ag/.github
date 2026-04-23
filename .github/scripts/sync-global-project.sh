@@ -24,6 +24,22 @@ echo "=== Sync Projects by Name Convention ==="
 echo "Org: $ORG  Global: #$GLOBAL_PROJECT_NUMBER"
 echo ""
 
+# Check rate limit status before heavy API usage
+RATE_LIMIT_INFO=$(gh api graphql -f query='
+  query {
+    rateLimit {
+      remaining
+      limit
+      resetAt
+    }
+  }
+' 2>&1) || RATE_LIMIT_INFO='{"data":{"rateLimit":{"remaining":"unknown","limit":5000,"resetAt":"unknown"}}}'
+
+REMAINING=$(echo "$RATE_LIMIT_INFO" | jq -r '.data.rateLimit.remaining // "unknown"')
+RESET_AT=$(echo "$RATE_LIMIT_INFO" | jq -r '.data.rateLimit.resetAt // "unknown"')
+echo "Rate limit: $REMAINING remaining (resets $RESET_AT)"
+echo ""
+
 # --- Step 1: Fetch all non-archived org repos ---
 
 echo "Fetching non-archived repos..."
@@ -156,13 +172,17 @@ query($owner: String!, $repo: String!, $cursor: String) {
 echo "--- Syncing issues to projects ---"
 echo ""
 
+# Timeout for issue fetching per repo (in seconds)
+ISSUE_FETCH_TIMEOUT=60
+
 while IFS= read -r repo; do
   [ -z "$repo" ] && continue
 
   # Determine target projects for this repo
   target_proj_ids=("$GLOBAL_PROJECT_ID")
   has_named_project=false
-  if [[ -v "PROJECT_BY_NAME[$repo]" ]]; then
+  # Use parameter expansion for bash 3.2 compatibility (-v is bash 4+)
+  if [[ -n "${PROJECT_BY_NAME[$repo]:-}" ]]; then
     named_proj_id="${PROJECT_BY_NAME[$repo]}"
     if [ "$named_proj_id" != "$GLOBAL_PROJECT_ID" ]; then
       target_proj_ids+=("$named_proj_id")
@@ -170,11 +190,27 @@ while IFS= read -r repo; do
     fi
   fi
 
-  ISSUES=$(gh api graphql \
+  # Progress logging before fetch
+  echo "Fetching issues from repo: $repo..."
+
+  # Fetch issues with timeout and error handling
+  ISSUES=$(timeout "$ISSUE_FETCH_TIMEOUT" gh api graphql \
     -f query="$ISSUES_QUERY" \
     -f owner="$ORG" \
     -f repo="$repo" \
-    --paginate 2>/dev/null || true)
+    --paginate 2>&1) || {
+    echo "  ERROR/TIMEOUT: fetching issues from $repo (timeout: ${ISSUE_FETCH_TIMEOUT}s)"
+    ERRORS=$((ERRORS + 1))
+    continue
+  }
+
+  # Check for rate limiting or API errors in response
+  if echo "$ISSUES" | jq -e '.errors' >/dev/null 2>&1; then
+    echo "  ERROR: API error fetching issues from $repo"
+    echo "  Details: $(echo "$ISSUES" | jq -r '.errors[].message')"
+    ERRORS=$((ERRORS + 1))
+    continue
+  fi
 
   [ -z "$ISSUES" ] && continue
 
@@ -193,10 +229,23 @@ while IFS= read -r repo; do
     for proj_id in "${target_proj_ids[@]}"; do
 
       # Add item (idempotent) — also retrieves current Status in the same call
+      # Errors are visible (no 2>/dev/null) for debugging
       ADD_RESULT=$(gh api graphql \
         -f query="$ADD_ITEM_QUERY" \
         -f projectId="$proj_id" \
-        -f contentId="$issue_id" 2>/dev/null || echo '{}')
+        -f contentId="$issue_id" 2>&1) || {
+        echo "  ERROR: gh api failed for #$issue_num to project $proj_id"
+        ERRORS=$((ERRORS + 1))
+        continue
+      }
+
+      # Check for GraphQL errors in response
+      if echo "$ADD_RESULT" | jq -e '.errors' >/dev/null 2>&1; then
+        echo "  ERROR: GraphQL error adding #$issue_num to $proj_id"
+        echo "  Details: $(echo "$ADD_RESULT" | jq -r '.errors[].message' | head -1)"
+        ERRORS=$((ERRORS + 1))
+        continue
+      fi
 
       ITEM_ID=$(echo "$ADD_RESULT" | jq -r '.data.addProjectV2ItemById.item.id // ""')
 
