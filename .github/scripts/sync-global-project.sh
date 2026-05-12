@@ -174,6 +174,8 @@ echo ""
 
 # Timeout for issue fetching per repo (in seconds)
 ISSUE_FETCH_TIMEOUT=60
+# Timeout for per-issue project mutations (in seconds)
+MUTATION_TIMEOUT=30
 
 while IFS= read -r repo; do
   [ -z "$repo" ] && continue
@@ -230,11 +232,11 @@ while IFS= read -r repo; do
 
       # Add item (idempotent) — also retrieves current Status in the same call
       # Errors are visible (no 2>/dev/null) for debugging
-      ADD_RESULT=$(gh api graphql \
+      ADD_RESULT=$(timeout "$MUTATION_TIMEOUT" gh api graphql \
         -f query="$ADD_ITEM_QUERY" \
         -f projectId="$proj_id" \
         -f contentId="$issue_id" 2>&1) || {
-        echo "  ERROR: gh api failed for #$issue_num to project $proj_id"
+        echo "  ERROR/TIMEOUT: gh api failed for #$issue_num to project $proj_id (timeout: ${MUTATION_TIMEOUT}s)"
         ERRORS=$((ERRORS + 1))
         continue
       }
@@ -278,7 +280,7 @@ while IFS= read -r repo; do
         continue
       fi
 
-      if gh api graphql -f query="
+      if timeout "$MUTATION_TIMEOUT" gh api graphql -f query="
         mutation {
           updateProjectV2ItemFieldValue(input: {
             projectId: \"$proj_id\"
@@ -290,7 +292,7 @@ while IFS= read -r repo; do
         echo "  #$issue_num → Inbox"
         INBOX_SET=$((INBOX_SET + 1))
       else
-        echo "  #$issue_num: added but failed to set Inbox ($proj_id)"
+        echo "  #$issue_num: added but failed to set Inbox ($proj_id, timeout ${MUTATION_TIMEOUT}s)"
         ERRORS=$((ERRORS + 1))
       fi
 
