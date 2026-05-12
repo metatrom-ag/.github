@@ -1,16 +1,18 @@
 name: Refresh Dashboard
 
-# Full dashboard refresh pipeline — runs daily and on demand:
+# Full dashboard refresh pipeline — runs hourly and on demand:
 #   1. Sync Global Project   — adds missing issues to projects, sets Inbox
 #   2. Sync Project Status   — syncs Status, Iteration, Quarter, and all issue fields
 #   3. Update Dashboard      — fetches stats and commits updated README to .github-private
 #
-# Daily schedule runs the full pipeline starting at 05:00 UTC.
+# Hourly schedule fires at HH:30 UTC so the dashboard is fresh before the
+# 11:00 (Berlin local) tech call regardless of DST. Concurrency on this
+# workflow queues overlapping runs (see concurrency block below).
 # Can also be triggered manually for an immediate refresh.
 
 on:
   schedule:
-    - cron: '0 5 * * *'
+    - cron: '30 * * * *'
   workflow_dispatch:
 
 jobs:
