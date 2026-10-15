@@ -1,0 +1,8 @@
+# Scene
+Philipp and Claude, 2026-10-15: disabling the dashboard-sync workflows, part of the day's topic-tagging work.
+
+# Decided
+- Philipp: all five workflows in .github, moved to an archive folder rather than deleted — reversible, inactive
+
+# Later
+- continuity's own automation to replace the dashboard/topic bookkeeping, mentioned but not yet scoped
