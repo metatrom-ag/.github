@@ -1,0 +1,16 @@
+# Scene
+Philipp and Claude, 2026-11-06: metatrom-ag/.github#35, the issue forms and the boards carry the five sizes, serving claude-code-plugins#259 (an issue's size estimated blind, measured in its pull request). Philipp asked for everything of #259 to be finished; a Sonnet subagent made the change, Claude (Fable) orchestrated.
+
+# Decided
+- Philipp: the scale is 1/2/3/5/8 shown as XS/S/M/L/XL, XL meaning split; 13 falls — one size for "split" is enough, two separate nothing; returns only if run 1 of #259 shows the measure still separates above 8 — #259.
+- Philipp: a parent is not estimated, it is the sum of its sub-issues — #259.
+- Philipp: the template follows the scale, over the scale following the template (1a of the draft) — #259.
+- Claude: `Unknown` stands first in all three forms, so a form opens on no size rather than on XS — the size is written by `estimate` later; before, `2-bug.yml` had it first and the others had none or last.
+- Claude: the boards #43, #34 and #48 got the single-select field `Size` (XS, S, M, L, XL) through `gh project field-create`; the field's options were read back by name and type only.
+
+# Discussed
+- Python had no yaml module; the three files were parsed with the node `yaml` package outside the repository.
+
+# Later
+- Existing issues keep their old Story Points text and no `Size` value; a migration is nobody's yet.
+- Whether `Size` on the board is filled from the form automatically (a workflow) or by hand — `estimate` (#263) writes the issue field; the board is open.
