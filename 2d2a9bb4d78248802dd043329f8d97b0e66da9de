@@ -1,0 +1,18 @@
+# Scene
+
+metatrom-ag/.github#37, sub-issue of metatrom-ag/claude-code-plugins#281 (step 10 of #259): the estimate reads the files the work goes through from a field the author fills on purpose. Run 7 (#278) showed the estimate's input is the limit — paths named in passing predict nothing (ρ 0.07 over 340 issues). Built by a Claude subagent in a scratch clone, on the branch feat/37-goes-through from origin/main after #36 merged.
+
+# Decided
+
+- Field id `goes-through`, label *Goes through*, type textarea, in all three templates: `1-idea.yml`, `2-bug.yml`, `3-action.yml`.
+- Placed directly above the *Story Points* dropdown, so the author names the paths before they pick a size.
+- Required in Bug and Action, optional in Idea — an idea's author may not yet know the code; a bug's or action's does.
+- Description in one sentence: the files or folders the work changes as far as known, one per line, a file where known, else its folder; the estimate counts from it. Placeholder shows one file and one folder (`src/orders/total.ts`, `docs/`).
+- The YAML was checked by parsing all three files (Ruby's YAML, no node parser installed) and asserting `goes-through` sits at the index before `story-points` with the right `required`.
+- The commit's author was reset before push: the scratch clone had no local identity and git fell back to a hostname email; the identity now matches the main checkout.
+
+# Later
+
+- No check of the paths against the repository — the author's knowledge is the input (left out on purpose in #37).
+- The estimate skill reading the field, the `goes-through` simulate variant and the reservoir extractor keeping it: #282, #283 in claude-code-plugins.
+- The forward measure on 30 issues written with the field: #281's Done when.
