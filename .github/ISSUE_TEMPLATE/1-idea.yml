@@ -78,6 +78,17 @@ body:
     validations:
       required: false
 
+  - type: textarea
+    id: goes-through
+    attributes:
+      label: Goes through
+      description: "The files or folders the work changes, as far as you know them — one per line, a file where known, else its folder; the estimate counts from it."
+      placeholder: |
+        src/orders/total.ts
+        docs/
+    validations:
+      required: false
+
   - type: dropdown
     id: story-points
     attributes:
