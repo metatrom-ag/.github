@@ -82,15 +82,14 @@ body:
     id: story-points
     attributes:
       label: Story Points
-      description: Relative complexity/effort
+      description: "Complexity as a size, 1/2/3/5/8 — XL means split; a parent carries the sum of its sub-issues"
       options:
-        - "1 - Trivial"
-        - "2 - Small"
-        - "3 - Medium"
-        - "5 - Large"
-        - "8 - Very Large"
-        - "13 - Epic (needs breakdown)"
         - "Unknown"
+        - "1 - XS"
+        - "2 - S"
+        - "3 - M"
+        - "5 - L"
+        - "8 - XL (split)"
     validations:
       required: true
 
