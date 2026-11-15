@@ -2,7 +2,6 @@ name: Idea / Feature Request
 description: Suggest a new idea or feature
 type: Feature
 labels: ["idea"]
-projects: ["metatrom-ag/6"]
 body:
   - type: markdown
     attributes:
