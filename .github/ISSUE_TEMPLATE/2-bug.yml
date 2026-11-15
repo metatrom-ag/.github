@@ -2,7 +2,6 @@ name: Bug Report
 description: Report a bug or issue
 type: Bug
 labels: ["bug", "triage"]
-projects: ["metatrom-ag/6"]
 body:
   - type: markdown
     attributes:
