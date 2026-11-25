@@ -1,0 +1,5 @@
+# Scene
+Claude, 2026-11-25, for Philipp: the ontocratic plugins installed at project scope across ~/github/topics/0field by update-all.sh, committed where the tree releases without Changeset.
+
+# Decided
+- Philipp: project scope is where the ontocratic plugins belong, in every tree; the trees releasing through Changeset carry the change in their next pull request, so no release gives nothing.
