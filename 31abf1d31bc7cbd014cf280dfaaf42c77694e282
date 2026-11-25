@@ -1,0 +1,9 @@
+# Scene
+Philipp and Claude, 2026-11-06: Philipp's yes to merge .github#38 and claude-code-plugins#284, the two buildable sub-issues of #281.
+
+# Decided
+- Philipp: both merged — the templates carry the Goes through field (required in Bug and Action, optional in Idea); the estimate reads it, the simulator has the variant goes-through, ontocratic-estimation 0.7.0.
+- Claude: .github#37 and #282 set to Released.
+
+# Later
+- #283, the forward run, opens once 30 issues written with the field have closed with a pull request; #281 and #259 stay open until then.
