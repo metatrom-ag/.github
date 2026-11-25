@@ -1,0 +1,20 @@
+{
+  "enabledPlugins": {
+    "rules-sync@metatrom-claude-code-plugins": true,
+    "continuity@metatrom-claude-code-plugins": true,
+    "ontocratic-engineering@metatrom-claude-code-plugins": true,
+    "ontocratic-metatrom@metatrom-claude-code-plugins": true,
+    "ontocratic-estimation@metatrom-claude-code-plugins": true,
+    "ontocratic-architecture@metatrom-claude-code-plugins": true,
+    "ontocratic-frontend@metatrom-claude-code-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "metatrom-claude-code-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "metatrom-ag/claude-code-plugins"
+      },
+      "autoUpdate": true
+    }
+  }
+}
