@@ -1,0 +1,6 @@
+# Scene
+Philipp installed the team's Claude Code plugins into each Metatrom tree; one PR per tree carries the setting onto main, before his next topic.
+
+# Decided
+- Philipp ("leans"): one PR per tree, carrying `.claude/settings.json` alone, merged once its checks pass; OntocraticArchitect's partial `.claude/rules/` left out.
+- Committed with CI's run as its verdict: the file is read by Claude Code alone, which commits.md allows.
