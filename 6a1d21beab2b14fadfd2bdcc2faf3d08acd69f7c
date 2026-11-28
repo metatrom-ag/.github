@@ -1,0 +1,37 @@
+{
+  "@context": "ofield://metatrom-ag/Continuity/workbench.jsonld",
+  "@id": "ofield://metatrom-ag/.github@refs/notes/continuity:6a1d21beab2b14fadfd2bdcc2faf3d08acd69f7c",
+  "@type": "Note",
+  "modelVersion": "0.9.1",
+  "commit": {
+    "@id": "ofield://metatrom-ag/.github@6a1d21beab2b14fadfd2bdcc2faf3d08acd69f7c"
+  },
+  "takes": [
+    {
+      "@type": "Take",
+      "scene": "Philipp brought every 0field topic repository to its latest main and gave each the same project settings as his user scope, so a clone carries them.",
+      "decided": [
+        {
+          "@type": "Decision",
+          "text": "every repository enables teamwork at project scope and sets `crossSessionInbound: accept` in `.claude/settings.json`; `update-all.sh` writes both on every run.",
+          "by": "Philipp"
+        },
+        {
+          "@type": "Decision",
+          "text": "pushed straight to main, one commit per repository, without a changeset — the SmartObject is unchanged, so nothing releases.",
+          "by": "Philipp"
+        },
+        {
+          "@type": "Decision",
+          "text": "Storybook's uncommitted work on `fix/25-npm-imports` was dropped, and its `basekernel-0.71` worktree removed.",
+          "by": "Philipp"
+        },
+        {
+          "@type": "Decision",
+          "text": "Workbench, archived on GitHub, and Imago, whose GitHub repo is gone, leave the topic folder and the workspace; their clones stay on disk, and Workbench's unpushable settings commit is undone.",
+          "by": "Philipp"
+        }
+      ]
+    }
+  ]
+}
