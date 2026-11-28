@@ -6,6 +6,8 @@
     "ontocratic-metatrom@metatrom-claude-code-plugins": true,
     "ontocratic-estimation@metatrom-claude-code-plugins": true,
     "ontocratic-architecture@metatrom-claude-code-plugins": true,
-    "ontocratic-frontend@metatrom-claude-code-plugins": true
-  }
+    "ontocratic-frontend@metatrom-claude-code-plugins": true,
+    "teamwork@metatrom-claude-code-plugins": true
+  },
+  "crossSessionInbound": "accept"
 }
